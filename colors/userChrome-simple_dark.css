@@ -1,0 +1,59 @@
+/*
+ * Author: graffatcolmingov
+ *
+ * Do not remove the @namespace line -- it's required for correct functioning
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* set default namespace to XUL */
+
+#TabsToolbar {
+  background-color: #242424 !important;
+  -moz-box-shadow: none !important;
+}
+
+.tabbrowser-tab {
+  background: transparent !important;
+  border: transparent !important;
+  color: #999 !important;
+  font-size: 12px;
+  font-weight: normal;
+  height: 12px !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  padding: 0 0.5ex !important;
+  -moz-appearance: none !important;
+  -moz-border-radius: 0 !important;
+}
+
+.tabbrowser-tab:hover {
+  background: #404040 !important;
+}
+
+.tabbrowser-tab[selected] {
+  background: transparent !important;
+  color: #fff !important;
+  font-weight: bold;
+  -moz-border-radius: 0 !important;
+}
+
+/* Tab listing */
+
+#alltabs-button {
+  -moz-appearance: none !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+#alltabs-button:hover {
+  background-color: #404040 !important;
+}
+
+/* Panorama button */
+
+#tabview-button {
+  -moz-appearance: none !important;
+  border: none !important;
+}
+
+#tabview-button:hover {
+  background-color: #404040 !important;
+}

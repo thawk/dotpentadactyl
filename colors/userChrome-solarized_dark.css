@@ -1,0 +1,72 @@
+/*
+ * Author: graffatcolmingov
+ *
+ * Do not remove the @namespace line -- it's required for correct functioning
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* set default namespace to XUL */
+
+@-moz-document url-prefix(chrome://)
+{
+    /*
+    #TabsToolbar {
+        background-color: #002b36 !important;
+        -moz-box-shadow: none !important;
+    }
+
+    menubar, toolbox, toolbar, .tabbrowser-tabs {
+        background-color: #002b36 !important;
+        color: #839496 !important;
+        -moz-box-shadow: none !important;
+    }
+    */
+
+    .tabbrowser-tab {
+        background: #002b36 !important;
+        border: transparent !important;
+        color: #eee8d5 !important;
+        font-size: 12px;
+        font-weight: normal;
+        height: 12px !important;
+        margin: 0 !important;
+        min-height: 0 !important;
+        padding: 0 0.5ex !important;
+        -moz-appearance: none !important;
+        -moz-border-radius: 0 !important;
+    }
+
+    .tabbrowser-tab:hover {
+        background: #b58900 !important;
+        color: #073642 !important;
+    }
+
+    .tabbrowser-tab[selected] {
+        background: #eee8d5 !important;
+        color: #839496 !important;
+        font-weight: bold;
+        -moz-border-radius: 0 !important;
+    }
+
+    /* Tab listing */
+
+    #alltabs-button {
+        -moz-appearance: none !important;
+        border: none !important;
+        color: #839496 !important;
+    }
+
+    #alltabs-button:hover {
+        background-color: #b58900 !important;
+        color: #073642 !important;
+    }
+
+    /* Panorama button */
+    #tabview-button {
+        -moz-appearance: none !important;
+        border: none !important;
+    }
+
+    #tabview-button:hover {
+        background-color: #b58900 !important;
+        color: #073642 !important;
+    }
+}

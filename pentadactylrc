@@ -1,0 +1,299 @@
+" 参考https://github.com/azuwis/.pentadactyl
+" http://www.slimeden.com/2011/03/firefox/pentadactyl
+
+" Options {{{
+    set runtimepath=~/.pentadactyl
+    " bookmark bar
+    set go+=B   
+    " tab number
+    set go+=n   
+    " 用独立行显示提示信息
+    "set go+=M   
+    "set nextpattern^='^((下|下一)(页|张|章|篇))','((下|下一)(页|张|章|篇))$','^\u203A\u203A$'
+    set nextpattern^='[下后]一?[頁页张个篇章节]','\bolder\s*(posts|entries)\b','^\u203A\u203A$'
+    "set previouspattern^='^((上|上一)(页|张|章|篇))','((上|上一)(页|张|章|篇))$','^\u2039\u2039$'
+    set previouspattern^='[上前]一?[頁页张个篇章节]','\bnewer\s*(posts|entries)\b','^\u2039\u2039$'
+    "set mapleader=','
+    " 用|或空白字符（包括换行）作为URL的分隔符
+    "set urlseparator='(\||\s+)'
+
+    if config.OS.isWindows
+        set editor='gvim + -f +<line> +"sil! call cursor(0, <column>)" <file>'
+    else
+        set editor='xerm -e vim + -f +<line> +"sil! call cursor(0, <column>)" <file>'
+    endif
+" }}}
+
+" Auto passthrought {{{
+    " Auto enter passthrought mode
+    autocmd LocationChange www.google.com/reader/*,mail.google.com/mail/*,docs.google.com/* :normal! <C-z>
+    autocmd LocationChange chrome://epubreader/* :normal! <C-z>
+" }}}
+
+" Firefox Hacks {{{
+    " Disable extension compatibility check {{{
+        set! extensions.checkCompatibility=false
+        style -name=addons-version addons.mozilla.org <<EOF
+            /* Show the install button for extensions for older versions of Firefox */
+            .install-container { display: block !important; }
+            .exp-loggedout > .install-button { display: none !important }
+EOF
+    " }}}
+
+    " Disable the install-dialog delay {{{
+        set! security.dialog_enable_delay=0
+    " }}}
+" }}}
+
+" Mappings {{{
+    map ,et :echo buffer.title<CR>
+    map ,eu :echo buffer.URL<CR>
+
+    " press ,s to search current selection
+    map ,s :exe ":tabopen google "+content.getSelection()<cr>
+
+    " 快速改变编码
+    map -builtin ,eu :set encoding=UTF-8<cr>
+    map -builtin ,eg :set encoding=GB2312<cr>
+
+    " Go to prev and next tab
+    "map -builtin q gT
+    "map -builtin w gt
+
+    " Move current tab
+    "map -builtin Q :tabmove! -1<cr>
+    "map -builtin W :tabmove! +1<cr>
+
+    " Toggle the toolbar
+    map <C-Up> :se go+=T<cr>
+    map <C-Down> :se go-=T<cr>
+
+    " Scroll more lines
+    map -b j 5j
+    map -b k 5k
+" }}}
+
+" Plugins (before loading) {{{
+    " copy.js {{{
+    "map <silent> ,y :js dactyl.clipboardWrite(content.document.title, true)<cr>
+    js <<EOM
+        options.copy_templates = [
+            { label: 'titleAndURL',    value: '%TITLE%\n%URL%', map: ',Y'},
+            { label: 'title',          value: '%TITLE%', map: ',y'},
+            { label: 'anchor',         value: '<a href="%URL%">%TITLE%</a>' },
+            { label: 'selanchor',      value: '<a href="%URL%" title="%TITLE%">%SEL%</a>' },
+            { label: 'htmlblockquote', value: '<blockquote cite="%URL%" title="%TITLE%">%HTMLSEL%</blockquote>' }
+        ];
+EOM
+    " }}}
+
+    " autoproxychanger.js {{{
+    set! network.proxy.no_proxies_on=localhost,127.0.0.1,172.31.0.0/21
+
+    javascript <<EOM
+        options.autochanger_proxy_enabled = true;
+        options.autochanger_proxy_settings = [
+            {
+                name  : 'disable',
+                usage : 'direct connection',
+                proxy :{
+                    type        : 0,
+                },
+            },
+            {
+                name  : 'home-privoxy',
+                usage : 'use privoxy at home',
+                proxy :{
+                    type        : 1,
+                    http        : '172.31.0.190',
+                    http_port   : 8118,
+                    ssl         : '172.31.0.190',
+                    ssl_port    : 8118,
+                },
+            },
+            {
+                name  : 'privoxy',
+                usage : 'use privoxy at localhost',
+                proxy :{
+                    type        : 1,
+                    http        : 'localhost',
+                    http_port   : 8118,
+                    ssl         : 'localhost',
+                    ssl_port    : 8118,
+                },
+            },
+            {
+                name  : 'yegle',
+                usage : 'use yegle\'s http proxy',
+                proxy :{
+                    type        : 1,
+                    http        : '10.13.0.1',
+                    http_port   : 3128,
+                    ssl         : '10.13.0.1',
+                    ssl_port    : 3128,
+                },
+            },
+        ];
+EOM
+    " }}}
+" }}}
+
+" Load all plugins
+loadplugins
+
+" Plugins (After loading) {{{
+"    " Buftabs {{{
+"    set nobuftabs
+"    set buftabs-maxlength=15
+"    " }}}
+" }}}
+
+"" {{{ Searching
+"" from http://www.slimeden.com/2011/03/firefox/pentadactyl
+
+" 重定义t和o：如果有文字链接被选中，则直接打开链接；如果被选中的是一般文字，则用默认搜索引擎搜索；
+" 否则打开:tabopen或者:open命令行，手动输入关键字搜索。
+map t -js content.getSelection().toString()!=""?dactyl.execute(":tabopen "+ content.getSelection()):CommandExMode().open("tabopen ")
+map o -js content.getSelection().toString()!=""?dactyl.execute(":open "+ content.getSelection()):CommandExMode().open("open ")
+
+" 按了s后就能自己输入搜索引擎关键字（当然也可以在自动补全菜单里选择），
+" 如果不选直接回车就是用默认引擎（对于选中的恰好是链接的情况则是直接打开链接） 
+command! -nargs=* -complete=search search execute 'tabopen <args> ' + content.getSelection().toString()
+map s :search<Space>
+
+" 映射键S：在某个搜索引擎结果页面按S键，会弹出引擎列表，选中引擎直接更换引擎用当前搜索的内容重新搜索。
+command! -nargs=? -complete=search switchSearch execute 'open <args> ' + (buffer.lastInputField?buffer.lastInputField.value:'')
+map S gi<ESC> :switchSearch<Space>
+command! -nargs=* siteSearch execute "tabopen <args> site:" + window.content.location.hostname
+
+"" search engines
+"" hide all browser search engines except google(for suggestion)
+js services.browserSearch.getEngines().forEach(function (e) {if(e.name!="Google") e.hidden = true})
+silent bmark -tags searchengine -title='Google SSL Search' https://www.google.com/search?q=%s&lr=lang_zh-CN|lang_zh-TW|lang_en -keyword g
+silent bmark -tags searchengine -title='Google Code Search' http://google.com/codesearch?q=%s -keyword gc
+silent bmark -tags searchengine -title='Wikipedia Search' http://en.wikipedia.org/wiki/Special:Search?search=%s -keyword w
+silent bmark -tags searchengine -title='Twitter Search' https://twitter.com/search/%s -keyword t
+silent bmark -tags searchengine -title='Debian Package Search' http://packages.debian.org/search?keywords=%s -keyword d
+silent bmark -tags searchengine -title='Debian File Search' http://packages.debian.org/search?searchon=contents&mode=exactfilename&keywords=%s -keyword df
+silent bmark -tags searchengine -title='Mtime Movie Search' http://search.mtime.com/search/?%s -keyword m
+silent bmark -tags searchengine -title='Douban Movie Search' http://movie.douban.com/subject_search?search_text=%s&cat=1002 -keyword dm
+silent bmark -tags searchengine -title='Shooter Subtitle Search' http://shooter.cn/search/%s -keyword s
+silent bmark -tags searchengine -title='Baidu Search' -charset=GB2312 http://www.baidu.com/s?wd=%s&rsv_bp=0&rsv_spt=3 -keyword b
+silent bmark -tags searchengine -title='KTXP Torrent Search' http://bt.ktxp.com/search.php?keyword=%s -keyword k
+silent bmark -tags searchengine -title='CHDBits Search' http://chdbits.org/torrents.php?incldead=1&spstate=0&inclbookmarked=0&search=%s&search_area=0&search_mode=0 -keyword c
+silent bmark -tags searchengine -title='Baidu MP3 Search' -charset=GB2312 http://mp3.baidu.com/m?f=ms&rf=idx&tn=baidump3&ct=134217728&lf=&rn=&word=%s&lm=-1 -keyword bm
+silent bmark -tags searchengine -title='Mobilism' http://forum.mobilism.org/search.php?keywords=%s&fid[]=398&sc=1&sr=topics&sf=titleonly -keyword mo
+silent bmark -tags searchengine -title='CPlusPlus' http://www.cplusplus.com/search.do?q=%s -keyword cpp
+
+set defsearch=g
+"" }}}
+
+"" {{{ Command
+"" smart reload
+"command! smartReload -js <<EOF
+"if (buffer.URL.spec.indexOf('#') >= 0) {
+"    dactyl.execute("reload");
+"} else {
+"    dactyl.open(buffer.URL.spec);
+"}
+"EOF
+"nmap -builtin r :smartReload<CR>
+
+command! smartReader -js <<EOF
+if (typeof __readable_by_evernote === "object") {
+    dactyl.execute("emenu Tools.Clearly");
+} else if (typeof FirefoxReader === "object") {
+    dactyl.execute("feedkeys <M-A-z>");
+} else if (typeof commands.get("readability") === "object") {
+    dactyl.execute("readability");
+} else {
+    dactyl.execute("bml-readability");
+}
+EOF
+nmap -builtin <Leader>r :smartReader<CR>
+
+"" flush browser dns
+command! flushdns set! network.dnsCacheExpiration=0 | set! network.dnsCacheExpiration&
+
+command! gohttps -js <<EOF
+if (buffer.URL.indexOf('http://') === 0) {
+    dactyl.open(String.replace(buffer.URL, /^http/i, 'https'));
+} else if (buffer.URL.indexOf('https://') === 0) {
+    dactyl.open(String.replace(buffer.URL, /^https/i, 'http'));
+}
+EOF
+nmap -builtin gs :gohttps<CR>
+
+"" display calendar
+command! cal -js dactyl.echo(<datepicker type="grid" xmlns={XUL}/>)
+
+"" toggle高亮
+command! hl set hlf!
+
+"" }}}
+
+" Themes {{{
+    "colorscheme zenburn
+    "colorscheme myzenburn
+    "colorscheme simple_dark
+    colorscheme solarized_dark
+" }}}
+
+" Styles {{{
+    " 在命令行上禁用输入法
+    style -name commandline-ime chrome://* #dactyl-commandline-command input {ime-mode: inactive;}
+
+    " Buftab styling {{{
+        hi -a BufTabSelected        color:#2e3330; background-color:#88b090; padding:0 4px;
+        hi -a BufTabs               margin:0 4px; overflow:hidden;
+        hi -a BufTab                padding:0 2px;
+    " }}}
+
+    " Hint font size {{{
+        hi Hint font-family: monospace; font-size: 13px; font-weight: bold; color: white; padding: 1px 3px; background: #744E7A;
+        hi HintElem background-color: #8FAF9F; color: #000D18; 
+        hi HintActive background: #F18C96; color: #333333;
+        hi Hint[active] background: green;
+    " }}}
+
+    " Display the tabbar at the bottom {{{
+    " style chrome://* #content > tabbox { -moz-box-direction: reverse !important; }
+    " }}}
+
+    " Italic text in not seen tabs {{{
+    "    style chrome://* #content tab:not([selected]) { font-style: italic !important; } 
+    " }}}
+
+" }}}
+
+" Quickmarks {{{
+    " r for Readable {{{
+        "silent qmark r javascript:(function(){_readableOptions={'text_font':'Tinos','text_font_monospace':'quote(Courier%20New),%20Courier,%20monospace','text_font_header':'quote(Palatino%20Linotype),%20Palatino,%20quote(Book%20Antigua),%20Georgia,%20serif','text_size':'22px','text_line_height':'1.5','box_width':'40em','color_text':'#FDFDFD','color_background':'#343A3A','color_links':'#99CCFF','text_align':'normal','base':'blueprint','custom_css':''};if(document.getElementsByTagName('body').length>0);else{return;}if(window.$readable){if(window.$readable.bookmarkletTimer){return;}}else{window.$readable={};}window.$readable.bookmarkletTimer=true;window.$readable.options=_readableOptions;if(window.$readable.bookmarkletClicked){window.$readable.bookmarkletClicked();return;}_readableScript=document.createElement('script');_readableScript.setAttribute('src','http://readable-static.tastefulwords.com/target.js?rand='+encodeURIComponent(Math.random()));document.getElementsByTagName('body')[0].appendChild(_readableScript);})()
+        "silent qmark r javascript:(function(){_readableOptions={'text_font':'Tinos','text_font_monospace':'quote(Courier%20New),%20Courier,%20monospace','text_font_header':'quote(Palatino%20Linotype),%20Palatino,%20quote(Book%20Antigua),%20Georgia,%20serif','text_size':'22px','text_line_height':'1.5','box_width':'40em','color_text':'#839496','color_background':'#002b36','color_links':'#268bd2','text_align':'normal','base':'blueprint','custom_css':''};if(document.getElementsByTagName('body').length>0);else{return;}if(window.$readable){if(window.$readable.bookmarkletTimer){return;}}else{window.$readable={};}window.$readable.bookmarkletTimer=true;window.$readable.options=_readableOptions;if(window.$readable.bookmarkletClicked){window.$readable.bookmarkletClicked();return;}_readableScript=document.createElement('script');_readableScript.setAttribute('src','http://readable-static.tastefulwords.com/target.js?rand='+encodeURIComponent(Math.random()));document.getElementsByTagName('body')[0].appendChild(_readableScript);})()
+        "silent qmark r javascript:(function(){_readableOptions={'text_font':'Tinos','text_font_monospace':'quote(Courier%20New),%20Courier,%20monospace','text_font_header':'quote(Palatino%20Linotype),%20Palatino,%20quote(Book%20Antigua),%20Georgia,%20serif','text_size':'22px','text_line_height':'1.5','box_width':'40em','color_text':'#839496','color_background':'#002b36','color_links':'#268bd2','text_align':'normal','base':'blueprint','custom_css':'pre%20{%20background-color:%20#073642;%20}'};if(document.getElementsByTagName('body').length>0);else{return;}if(window.$readable){if(window.$readable.bookmarkletTimer){return;}}else{window.$readable={};}window.$readable.bookmarkletTimer=true;window.$readable.options=_readableOptions;if(window.$readable.bookmarkletClicked){window.$readable.bookmarkletClicked();return;}_readableScript=document.createElement('script');_readableScript.setAttribute('src','http://readable-static.tastefulwords.com/target.js?rand='+encodeURIComponent(Math.random()));document.getElementsByTagName('body')[0].appendChild(_readableScript);})()
+        " yahei
+        silent qmark r javascript:(function(){_readableOptions={'text_font':'Microsoft%20YaHei,%20Arial','text_font_monospace':'quote(Courier%20New),%20Courier,%20monospace','text_font_header':'quote(Palatino%20Linotype),%20Palatino,%20quote(Book%20Antigua),%20Georgia,%20serif','text_size':'20px','text_line_height':'1.5','box_width':'40em','color_text':'#839496','color_background':'#002b36','color_links':'#268bd2','text_align':'normal','base':'blueprint','custom_css':'pre%20{%20background-color:%20#073642;%20}'};if(document.getElementsByTagName('body').length>0);else{return;}if(window.$readable){if(window.$readable.bookmarkletTimer){return;}}else{window.$readable={};}window.$readable.bookmarkletTimer=true;window.$readable.options=_readableOptions;if(window.$readable.bookmarkletClicked){window.$readable.bookmarkletClicked();return;}_readableScript=document.createElement('script');_readableScript.setAttribute('src','http://readable-static.tastefulwords.com/target.js?rand='+encodeURIComponent(Math.random()));document.getElementsByTagName('body')[0].appendChild(_readableScript);})()
+    " }}}
+
+    " q for Quix {{{
+        silent qmark q javascript:Quix();function%20Quix(){var%20e=encodeURIComponent;var%20t=window.getSelection?window.getSelection():(document.getSelection?document.getSelection():(document.selection?document.selection.createRange().text:''));var%20c=window.prompt('Quix:%20Type%20`help`%20for%20a%20list%20of%20commands:');if(t!=''){if(c){c+='%20'+t;}else{c=''+t;}}if(c){var%20u='http://www.quixapp.com/go/?c='+e(c)+'&t='+(document.title?e(document.title):'')+'&s='+'&v=081'+'&u='+(document.location?e(document.location):'');d=''+document.location;if(d.substr(0,4)!='http'){window.location=u+'&mode=direct';}else{heads=document.getElementsByTagName('head');if(c.substring(0,1)=='%20'){var%20w=window.open(u+'&mode=direct');w.focus();}else%20if(heads.length==0){window.location=u+'&mode=direct';}else{q=document.getElementById('quix');if(q){q.parentNode.removeChild(q);}sc=document.createElement('script');sc.src=u;sc.id='quix';sc.type='text/javascript';void(heads[0].appendChild(sc));}}}}
+    " }}}
+
+    " a for aardvark {{{
+        "silent qmark a javascript:document.getElementsByTagName('head')[0].appendChild(document.createElement('script')).setAttribute('src','http://www.karmatics.com/aardvark/bookmarklet.js')
+        silent qmark a javascript:document.getElementsByTagName('head')[0].appendChild(document.createElement('script')).setAttribute('src','http://www.karmatics.com/aardvark/bookmarklet.js')
+    " }}}
+
+    " e for epubreader {{{
+        silent qmark e chrome://epubreader/content/catalog.xul
+    " }}}
+
+    " p for Pocket (Read It Later) {{{
+        silent qmark p javascript:(function(){ISRIL_H='bf8a';PKT_D='getpocket.com';ISRIL_SCRIPT=document.createElement('SCRIPT');ISRIL_SCRIPT.type='text/javascript';ISRIL_SCRIPT.src='http://'+PKT_D+'/b/r.js';document.getElementsByTagName('head')[0].appendChild(ISRIL_SCRIPT)})();
+
+    " t for toodledo {{{
+        silent qmark t http://www.toodledo.com/
+    " }}}
+" }}}
+
+" vim:ft=pentadactyl:fileencoding=utf-8:foldmethod=marker
