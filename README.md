@@ -1,0 +1,4 @@
+dotpentadactyl
+==============
+
+my pentadactyl configuration
